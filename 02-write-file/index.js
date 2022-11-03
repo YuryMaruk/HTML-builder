@@ -21,10 +21,22 @@ stdin.on('data', data => {
         })
     }
 })
+
 process.on('SIGINT', () => {
+    deleteFile(pathToFile);
     process.exit();
 })
-process.on('exit', () => stdout.write('Bye-bye!'));
+
+process.on('exit', () => {
+   deleteFile(pathToFile);
+    stdout.write('Bye-bye!')
+});
+
+function deleteFile(path){
+    fs.unlink(path, (err) => {
+        if (err) throw err;
+    })
+}
 
 
 
