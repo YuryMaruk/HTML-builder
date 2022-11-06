@@ -9,7 +9,7 @@ containFiles(styles, 'css', bundle);
 
 async function containFiles(src, extName, srcTo) {
 
-    const writeFile = fs.createWriteStream(bundle);
+    const writeFile = fs.createWriteStream(srcTo);
 
     let items = await readdir(src, { withFileTypes: true }, (err, files) => {
         if (err) throw err;
