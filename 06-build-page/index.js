@@ -8,9 +8,9 @@ const { copyFile } = require('node:fs/promises');
 const pathToProjectDist = path.join(__dirname, 'project-dist');
 const pathToStyles = path.join(__dirname, 'styles');
 const pathToStyle = path.join(__dirname, 'project-dist', 'style.css');
+const pathToAssets = path.join(__dirname, 'assets');
 
-makeDirectory(pathToProjectDist);
-containFiles(pathToStyles, 'css', pathToStyle); //contain and redirict .css files to 'project-dist' folder
+makeDirectory(pathToProjectDist); 
 
 
 async function containFiles(src, extName, srcTo) {
@@ -41,21 +41,48 @@ async function makeDirectory(src) {
 
     try {
         await mkdir(src, { recursive: false });
+        containFiles(pathToStyles, 'css', pathToStyle);
+        await mkdir(path.join(src, 'assets'), { recursive: false });
+        cloneFile(pathToAssets, path.join(src, 'assets'));
     } catch {
         console.log('dir already created');
         await removeDir(src);
         console.log('dir already deleted');
         await mkdir(src, { recursive: false });
         containFiles(pathToStyles, 'css', pathToStyle);
+        await mkdir(path.join(src, 'assets'), { recursive: false });
+        cloneFile(pathToAssets, path.join(src, 'assets'));
+        //добавить копирование ассетов
+    }
+}
+
+async function createDir(src){
+    try {
+        await mkdir(src, { recursive: false });
+     
+    } catch {
+        console.log('dir already created in assets');
+       
     }
 }
 
 async function cloneFile(path1, path2) {
-    try {
-        await copyFile(path1, path2);
-    } catch {
-        console.log('The file could not be copied');
-    }
+    let items = await readdir(path1, { withFileTypes: true }, (err, files) => {
+        if (err) throw err;
+    })
+
+    items.forEach(file => {
+        if (file.isDirectory()) {
+            createDir(path.join(path2, file.name));
+            cloneFile(path.join(path1, file.name), path.join(path2, file.name));
+        } else {
+            try {
+                copyFile(path.join(path1, file.name),  path.join(path2, file.name));
+              } catch {
+                console.log('The file could not be copied');
+              }
+        }
+    });
 }
 async function removeDir(src) {
     try {
