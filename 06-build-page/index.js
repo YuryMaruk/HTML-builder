@@ -10,7 +10,7 @@ const pathToStyles = path.join(__dirname, 'styles');
 const pathToStyle = path.join(__dirname, 'project-dist', 'style.css');
 const pathToAssets = path.join(__dirname, 'assets');
 
-makeDirectory(pathToProjectDist); 
+makeDirectory(pathToProjectDist);
 
 
 async function containFiles(src, extName, srcTo) {
@@ -44,6 +44,11 @@ async function makeDirectory(src) {
         containFiles(pathToStyles, 'css', pathToStyle);
         await mkdir(path.join(src, 'assets'), { recursive: false });
         cloneFile(pathToAssets, path.join(src, 'assets'));
+        let items = await readdir(path.join(__dirname, 'components'), { withFileTypes: true }, (err, files) => {
+            if (err) throw err;
+        })
+        htmlParser(path.join(__dirname, 'template.html'), path.join(__dirname, 'components'),
+            path.join(pathToProjectDist, 'index.html'), items);
     } catch {
         console.log('dir already created');
         await removeDir(src);
@@ -52,17 +57,21 @@ async function makeDirectory(src) {
         containFiles(pathToStyles, 'css', pathToStyle);
         await mkdir(path.join(src, 'assets'), { recursive: false });
         cloneFile(pathToAssets, path.join(src, 'assets'));
-        //добавить копирование ассетов
+        let items = await readdir(path.join(__dirname, 'components'), { withFileTypes: true }, (err, files) => {
+            if (err) throw err;
+        })
+        htmlParser(path.join(__dirname, 'template.html'), path.join(__dirname, 'components'),
+            path.join(pathToProjectDist, 'index.html'), items);
     }
 }
 
-async function createDir(src){
+async function createDir(src) {
     try {
         await mkdir(src, { recursive: false });
-     
+
     } catch {
         console.log('dir already created in assets');
-       
+
     }
 }
 
@@ -77,10 +86,10 @@ async function cloneFile(path1, path2) {
             cloneFile(path.join(path1, file.name), path.join(path2, file.name));
         } else {
             try {
-                copyFile(path.join(path1, file.name),  path.join(path2, file.name));
-              } catch {
+                copyFile(path.join(path1, file.name), path.join(path2, file.name));
+            } catch {
                 console.log('The file could not be copied');
-              }
+            }
         }
     });
 }
@@ -92,3 +101,39 @@ async function removeDir(src) {
         console.log('не получилось удалить папку')
     }
 }
+
+function htmlParser(src1, src2, src3, elements) {
+
+    let obj = {};
+
+    const readFileTemplateHtml = fs.createReadStream(src1, 'utf-8');
+
+    elements.forEach(file => {
+
+        let arr = [];
+        arr = file.name.split('.');
+        const stream = fs.createReadStream(path.join(src2, file.name), 'utf-8');
+
+        let data = '';
+
+        stream.on('data', chunk => data += chunk);
+        stream.on('end', () => {
+            obj[arr[0]] = data;
+            let data2 = '';
+            readFileTemplateHtml.on('data', chunk => {
+                data2 = chunk;
+            })
+            readFileTemplateHtml.on('end', ()=> {
+                for (key in obj) { 
+                  data2 = data2.replace(`{{${key}}}`, obj[key]);
+                }
+
+                const writeFileHtml = fs.createWriteStream(src3, ['w']);
+                writeFileHtml.write(data2);
+            })
+        });
+        stream.on('error', error => console.log('Error', error.message));
+       
+    });
+}
+//извиняюсь за говнокод, глаза закрываются, пару часов осталось поспать, не смогу причесать код, после работы уже наступит дедлаайн.
