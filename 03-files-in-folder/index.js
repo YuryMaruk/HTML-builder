@@ -12,7 +12,7 @@ fs.readdir(pathToSecret, { withFileTypes: true }, (err, files) => {
             arr = file.name.split('.');
             fs.stat(path.join(pathToSecret, file.name), (err, stats) => {
                 if (err) throw err;
-                let size = stats.size / 1000 + 'kb';
+                let size = stats.size / 1024 + 'kb';
 
                 console.log(`${arr[0]} - ${arr[1]} - ${size}`);
             })
